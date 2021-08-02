@@ -22,9 +22,10 @@ class FloorsScheme {
     this.wrapper.css('height', HEIGHT);
     this.canvas.css('position', 'relative');
     this.canvas.css('zIndex', '1');
-    console.log(this.wrapper.width());
     this.canvas.css('width', this.wrapper.width());
     this.canvas.css('height', this.wrapper.height());
+    this.canvas.attr('width', this.wrapper.width() * 2);
+    this.canvas.attr('height', this.wrapper.height() * 2);
 
     this.ctx = this.canvas[0].getContext('2d');
 
@@ -51,7 +52,7 @@ class FloorsScheme {
   _addSpace(coords, type) {
     this.ctx.beginPath();
 
-    this.ctx.setLineDash([5, 5]);
+    this.ctx.setLineDash([7, 7]);
     this.ctx.lineWidth = SPACE_BORDER_WIDTH;
     switch (type) {
       case 'busy':
@@ -77,7 +78,7 @@ class FloorsScheme {
   }
 
   _showFloorSpaces(floorIndex) {
-    this.ctx.clearRect(0, 0, this.canvas[0].width, this.canvas[0].height);
+    this.ctx.clearRect(0, 0, this.canvas.width(), this.canvas.height());
 
     for (const spaceInfo of this.data[floorIndex].spacesInfo) {
       this._addSpace(spaceInfo.spaceCoords, spaceInfo.spaceType);
