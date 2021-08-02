@@ -1,12 +1,6 @@
-body {
-  margin: 0;
-  padding: 0;
-}
-
-#floors {
-  width: 100vw;
-}
-
-#floors .frame img {
+.floor-image {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 100%;
 }

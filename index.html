@@ -1,19 +1,49 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Floors</title>
-    <link rel="stylesheet" href="main.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="main.css" />
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div id="floors">
-      <img src="floor.png">
-      <canvas id="scheme"></canvas>
+      <!-- <img src="floor.png" />
+      <canvas id="scheme"></canvas> -->
     </div>
     <script src="main.js"></script>
     <script>
-      const floorScheme = FloorsScheme;
+      const floorScheme = new FloorsScheme('#floors', [
+        {
+          floorImage: 'floor.png',
+          spacesInfo: [
+            {
+              spaceCoords: [
+                [10, 10],
+                [200, 10],
+                [200, 100],
+                [10, 100],
+                [10, 10],
+              ],
+              spaceType: 'available',
+            },
+            {
+              spaceCoords: [
+                [100, 100],
+                [2000, 100],
+                [2000, 1000],
+                [100, 1000],
+                [100, 100],
+              ],
+              spaceType: 'busy',
+            },
+          ],
+        },
+      ]);
       floorScheme.initialize();
     </script>
   </body>
