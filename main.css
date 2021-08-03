@@ -1,6 +1,12 @@
 .floor-image {
+  width: 100%;
+  vertical-align: middle;
+}
+
+.floor-scheme {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1960px;
+  width: 100%;
+  height: 100%;
 }

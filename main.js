@@ -11,29 +11,28 @@ class FloorsScheme {
   constructor(wrapper, data) {
     this.wrapper = $(wrapper);
     this.data = data;
+    this.dpiWrapperWidth = this.wrapper.width() * 2;
+    this.dpiWrapperHeight = this.wrapper.height() * 2;
   }
 
   initialize() {
-    this.canvas = $('<canvas></canvas>');
+    this.canvas = $('<canvas class="floor-scheme"></canvas>');
     this.wrapper.append(this.canvas[0]);
 
     this.wrapper.css('position', 'relative');
     this.wrapper.css('width', WIDTH);
     this.wrapper.css('height', HEIGHT);
-    this.canvas.css('position', 'relative');
     this.canvas.css('zIndex', '1');
-    this.canvas.css('width', this.wrapper.width());
-    this.canvas.css('height', this.wrapper.height());
-    this.canvas.attr('width', this.wrapper.width() * 2);
-    this.canvas.attr('height', this.wrapper.height() * 2);
-
+    
+    console.log(this.wrapper.height());
+    
     this.ctx = this.canvas[0].getContext('2d');
-
+    
     for (let i = 0; i < this.data.length; i++) {
       const floorImage = this.data[i].floorImage;
       this.wrapper.append(
         `<img class="floor-image" src="${floorImage}" data-index="${i}" hidden/>`
-      );
+        );
     }
 
     this.changeActiveFloor(ACTIVE_FLOOR_INDEX);
@@ -46,7 +45,14 @@ class FloorsScheme {
     this.wrapper.find('.floor-image').attr('hidden', true);
     floorImage.attr('hidden', false);
 
-    this._showFloorSpaces(floorIndex);
+
+    floorImage.on('load', function () {
+      this.dpiWrapperWidth = this.wrapper.width() * 2;
+      this.dpiWrapperHeight = this.wrapper.height() * 2;
+      this.canvas.attr('width', this.dpiWrapperWidth + "px");
+      this.canvas.attr('height', this.dpiWrapperHeight + "px");
+      this._showFloorSpaces(floorIndex);
+    }.bind(this));
   }
 
   _addSpace(coords, type) {
@@ -70,7 +76,7 @@ class FloorsScheme {
     }
 
     for (const [x, y] of coords) {
-      this.ctx.lineTo(x, y);
+      this.ctx.lineTo(x, this.dpiWrapperHeight - y);
     }
     this.ctx.stroke();
 
