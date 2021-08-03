@@ -1,14 +1,14 @@
 const WIDTH = 900;
 const HEIGHT = 'auto';
-const SPACE_BORDER_WIDTH = 2;
+const SPACE_BORDER_WIDTH = 5;
 const SPACE_BORDER_BUSY = '#bb2124';
 const SPACE_BORDER_AVAILABLE = '#22bb33';
 const SPACE_FILL_BUSY = 'rgba(187, 33, 36, 0.5)';
 const SPACE_FILL_AVAILABLE = 'rgba(34, 187, 51, 0.5)';
 const ACTIVE_FLOOR_INDEX = 0;
-const ORGANIZATION_LOGO_WIDTH = 900;
-const ORGANIZATION_LOGO_BACKGROUND_COLOR = '#bbbbbb';
-const ORGANIZATION_LOGO_BACKGROUND_RADIUS = '#bbbbbb';
+const ORGANIZATION_LOGO_WIDTH = 25;
+const ORGANIZATION_LOGO_BACKGROUND_COLOR = 'rgba(0, 0, 0, 0.2)';
+const ORGANIZATION_LOGO_BACKGROUND_RADIUS = 20;
 
 class FloorsScheme {
   constructor(wrapper, data) {
@@ -93,11 +93,21 @@ class FloorsScheme {
     let logoImage = new Image();
     logoImage.src = logo;
     const [x, y] = coords;
+    
+    
     logoImage.onload = () => {
       let realX = x * 2;
       let realY = this.dpiWrapperHeight - y * 2;
       let scaleFactor = logoImage.width / ORGANIZATION_LOGO_WIDTH;
-      this.ctx.drawImage(logoImage, 0, 0, logoImage.width, logoImage.height, realX, realY, ORGANIZATION_LOGO_WIDTH * 2, logoImage.height / scaleFactor);
+      let backgroundCenterX = realX + ORGANIZATION_LOGO_WIDTH; 
+      let backgroundCenterY = realY + logoImage.height / scaleFactor; 
+
+      this.ctx.beginPath();
+      this.ctx.arc(backgroundCenterX, backgroundCenterY, ORGANIZATION_LOGO_BACKGROUND_RADIUS * 2, 0, 2 * Math.PI, false);
+      this.ctx.fillStyle = ORGANIZATION_LOGO_BACKGROUND_COLOR;
+      this.ctx.fill();
+
+      this.ctx.drawImage(logoImage, 0, 0, logoImage.width, logoImage.height, realX, realY, ORGANIZATION_LOGO_WIDTH * 2, (logoImage.height / scaleFactor) * 2);
     }
   }
 
