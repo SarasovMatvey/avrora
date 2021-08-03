@@ -39,6 +39,8 @@ class FloorsScheme {
     }
 
     this.changeActiveFloor(ACTIVE_FLOOR_INDEX);
+
+    this._bindEventListeners();
   }
 
   changeActiveFloor(floorIndex) {
@@ -59,6 +61,41 @@ class FloorsScheme {
       }.bind(this)
     );
   }
+
+  _bindEventListeners() {
+    this.canvas.on('mousemove', ({ pageX, pageY }) => {
+      let canvasClientX = pageX - this.canvas.offset().left;
+      let canvasClientY = pageY - this.canvas.offset().top;
+
+      console.log(
+        this._spaceCoordsToPageRelative([
+          [20, 30],
+          [295, 30],
+          [295, 215],
+          [20, 215],
+          [20, 30],
+        ])
+      );
+      console.log(pageX, pageY);
+
+      let a = this.pointInPolygon(
+        [canvasClientX, canvasClientY],
+        this._spaceCoordsToPageRelative([
+          [20, 30],
+          [295, 30],
+          [295, 215],
+          [20, 215],
+          [20, 30],
+        ])
+      );
+
+      if (a) alert(123);
+
+      console.log(a);
+    });
+  }
+
+  _getSpaceByCoords(x, y) {}
 
   _addSpace(coords, type, organizationInfo) {
     this.ctx.beginPath();
@@ -174,5 +211,64 @@ class FloorsScheme {
         spaceInfo.organizationInfo
       );
     }
+  }
+
+  _spaceCoordsToPageRelative(coords) {
+    const result = coords.map(([x, y]) => {
+      return [
+        this.canvas.offset().left + x,
+        this.canvas.offset().top + (this.wrapper.height() - y),
+      ];
+    });
+
+    return result;
+  }
+
+  // TODO: move to lib
+
+  pointInPolygon(point, vs, start, end) {
+    if (vs.length > 0 && Array.isArray(vs[0])) {
+      return this.pointInPolygonNested(point, vs, start, end);
+    } else {
+      return this.pointInPolygonFlat(point, vs, start, end);
+    }
+  }
+
+  pointInPolygonFlat(point, vs, start, end) {
+    var x = point[0],
+      y = point[1];
+    var inside = false;
+    if (start === undefined) start = 0;
+    if (end === undefined) end = vs.length;
+    var len = (end - start) / 2;
+    for (var i = 0, j = len - 1; i < len; j = i++) {
+      var xi = vs[start + i * 2 + 0],
+        yi = vs[start + i * 2 + 1];
+      var xj = vs[start + j * 2 + 0],
+        yj = vs[start + j * 2 + 1];
+      var intersect =
+        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  pointInPolygonNested(point, vs, start, end) {
+    var x = point[0],
+      y = point[1];
+    var inside = false;
+    if (start === undefined) start = 0;
+    if (end === undefined) end = vs.length;
+    var len = end - start;
+    for (var i = 0, j = len - 1; i < len; j = i++) {
+      var xi = vs[i + start][0],
+        yi = vs[i + start][1];
+      var xj = vs[j + start][0],
+        yj = vs[j + start][1];
+      var intersect =
+        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+      if (intersect) inside = !inside;
+    }
+    return inside;
   }
 }
