@@ -6,6 +6,9 @@ const SPACE_BORDER_AVAILABLE = '#22bb33';
 const SPACE_FILL_BUSY = 'rgba(187, 33, 36, 0.5)';
 const SPACE_FILL_AVAILABLE = 'rgba(34, 187, 51, 0.5)';
 const ACTIVE_FLOOR_INDEX = 0;
+const ORGANIZATION_LOGO_WIDTH = 900;
+const ORGANIZATION_LOGO_BACKGROUND_COLOR = '#bbbbbb';
+const ORGANIZATION_LOGO_BACKGROUND_RADIUS = '#bbbbbb';
 
 class FloorsScheme {
   constructor(wrapper, data) {
@@ -55,7 +58,7 @@ class FloorsScheme {
     }.bind(this));
   }
 
-  _addSpace(coords, type) {
+  _addSpace(coords, type, organizationInfo) {
     this.ctx.beginPath();
 
     this.ctx.setLineDash([7, 7]);
@@ -79,15 +82,30 @@ class FloorsScheme {
       this.ctx.lineTo(x * 2, this.dpiWrapperHeight - y * 2);
     }
     this.ctx.stroke();
-
     this.ctx.fill();
+
+    if (type === 'busy') {
+      this._drawLogo(organizationInfo.logo, organizationInfo.logoCoords);
+    }
+  }
+  
+  _drawLogo(logo, coords) {
+    let logoImage = new Image();
+    logoImage.src = logo;
+    const [x, y] = coords;
+    logoImage.onload = () => {
+      let realX = x * 2;
+      let realY = this.dpiWrapperHeight - y * 2;
+      let scaleFactor = logoImage.width / ORGANIZATION_LOGO_WIDTH;
+      this.ctx.drawImage(logoImage, 0, 0, logoImage.width, logoImage.height, realX, realY, ORGANIZATION_LOGO_WIDTH * 2, logoImage.height / scaleFactor);
+    }
   }
 
   _showFloorSpaces(floorIndex) {
     this.ctx.clearRect(0, 0, this.canvas.width(), this.canvas.height());
 
     for (const spaceInfo of this.data[floorIndex].spacesInfo) {
-      this._addSpace(spaceInfo.spaceCoords, spaceInfo.spaceType);
+      this._addSpace(spaceInfo.spaceCoords, spaceInfo.spaceType, spaceInfo.organizationInfo);
     }
   }
 }
