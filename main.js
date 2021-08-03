@@ -76,7 +76,7 @@ class FloorsScheme {
     }
 
     for (const [x, y] of coords) {
-      this.ctx.lineTo(x, this.dpiWrapperHeight - y);
+      this.ctx.lineTo(x * 2, this.dpiWrapperHeight - y * 2);
     }
     this.ctx.stroke();
 
