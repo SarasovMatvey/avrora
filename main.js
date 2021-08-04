@@ -83,8 +83,15 @@ class FloorsScheme {
       }
     });
 
-    this.wrapper.find('.prev-floor').on('click', () => this.prevFloor());
-    this.wrapper.find('.next-floor').on('click', () => this.nextFloor());
+    this.wrapper.find('.prev-floor').on('click', () => {
+      this.prevFloor()
+      this.wrapper.find('.space-floor-select select').val(this.currentFloorIndex);
+    });
+    this.wrapper.find('.next-floor').on('click', () => {
+      this.nextFloor()
+      this.wrapper.find('.space-floor-select select').val(this.currentFloorIndex);
+    });
+    this.wrapper.find('.space-floor-select select').on('change', e => this.changeActiveFloor($(e.currentTarget).val()))
   }
 
   changeActiveFloor(floorIndex) {
