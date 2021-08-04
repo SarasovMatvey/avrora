@@ -20,7 +20,7 @@
       const floorScheme = new FloorsScheme('#floors', [
         {
           floorNumber: 2,
-          floorImage: 'floor.png',
+          floorImage: 'floor2.png',
           spacesInfo: [
             {
               spaceCoords: [
@@ -38,11 +38,27 @@
                 area: '45 кв.м.'
               },
             },
+            {
+              spaceCoords: [
+                [445, 107],
+                [618, 107],
+                [618, 225],
+                [445, 225],
+                [445, 107],
+              ],
+              spaceType: 'busy',
+              organizationInfo: {
+                name: 'kfc',
+                logo: 'kfc.png',
+                autocenter: true,
+                area: '15 кв.м.'
+              },
+            },
           ],
         },
         {
           floorNumber: 3,
-          floorImage: 'floor.png',
+          floorImage: 'floor3.png',
           spacesInfo: [
             {
               spaceCoords: [
@@ -54,7 +70,7 @@
               ],
               spaceType: 'available',
               organizationInfo: {
-                name: '2gis',
+                name: 'Свободное пространство',
                 logo: '2gis.svg',
                 autocenter: true,
                 area: '15 кв.м.'
