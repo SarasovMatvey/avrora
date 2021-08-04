@@ -5,7 +5,7 @@ const SPACE_BORDER_BUSY = '#bb2124';
 const SPACE_BORDER_AVAILABLE = '#22bb33';
 const SPACE_FILL_BUSY = 'rgba(187, 33, 36, 0.5)';
 const SPACE_FILL_AVAILABLE = 'rgba(34, 187, 51, 0.5)';
-const ACTIVE_FLOOR_INDEX = 0;
+const DEFAULT_FLOOR_INDEX = 0;
 const ORGANIZATION_LOGO_WIDTH = 25;
 const ORGANIZATION_LOGO_BACKGROUND_COLOR = 'rgba(0, 0, 0, 0.3)';
 const ORGANIZATION_LOGO_BACKGROUND_RADIUS = 20;
@@ -16,11 +16,34 @@ class FloorsScheme {
     this.data = data;
     this.dpiWrapperWidth = this.wrapper.width() * 2;
     this.dpiWrapperHeight = this.wrapper.height() * 2;
+    this.currentFloorIndex = DEFAULT_FLOOR_INDEX;
   }
 
   initialize() {
     this.canvas = $('<canvas class="floor-scheme"></canvas>');
     this.wrapper.append(this.canvas[0]);
+    this.spaceCard = $(`
+      <div class="space-card hidden">
+        <h2 class="space-card-title"></h2>
+        <ul class="space-card-info"></ul>
+      </div>
+    `);
+    this.wrapper.append(this.spaceCard);
+    this.floorSelect = $(`
+      <div class="space-floor-select">
+        <div class="space-floor-select-controls">
+          <button class="prev-floor">-</button>
+          <button class="next-floor">+</button>
+        </div>
+        <select>
+        ${
+          this.data.map((floor, index) => `<option value="${index}">Этаж - ${floor.floorNumber}</option>`)
+        }
+        </select>
+      </div>
+    `);
+    this.wrapper.append(this.floorSelect);
+
 
     this.wrapper.css('position', 'relative');
     this.wrapper.css('width', WIDTH);
@@ -38,9 +61,30 @@ class FloorsScheme {
       );
     }
 
-    this.changeActiveFloor(ACTIVE_FLOOR_INDEX);
+    this.changeActiveFloor(DEFAULT_FLOOR_INDEX);
 
     this._bindEventListeners();
+  }
+
+  _bindEventListeners() {
+    this.canvas.on('mousemove', ({ pageX, pageY }) => {
+      const space = this._getSpaceByCoords(pageX, pageY);
+      const organizationInfo = space.organizationInfo;
+
+      if (space) {
+        this._showSpaceCard({
+          title: organizationInfo.name,
+          fields: [
+            {key: 'Площадь', value: organizationInfo.area},
+          ]
+        });
+      } else {
+        this._hideSpaceCard();
+      }
+    });
+
+    this.wrapper.find('.prev-floor').on('click', () => this.prevFloor());
+    this.wrapper.find('.next-floor').on('click', () => this.nextFloor());
   }
 
   changeActiveFloor(floorIndex) {
@@ -50,36 +94,56 @@ class FloorsScheme {
     this.wrapper.find('.floor-image').attr('hidden', true);
     floorImage.attr('hidden', false);
 
+    this._updateCanvasSizes();
+    this._showFloorSpaces(floorIndex);
     floorImage.on(
       'load',
       function () {
-        this.dpiWrapperWidth = this.wrapper.width() * 2;
-        this.dpiWrapperHeight = this.wrapper.height() * 2;
-        this.canvas.attr('width', this.dpiWrapperWidth + 'px');
-        this.canvas.attr('height', this.dpiWrapperHeight + 'px');
+        this._updateCanvasSizes();
         this._showFloorSpaces(floorIndex);
       }.bind(this)
     );
+
+    this.currentFloorIndex = floorIndex;
   }
 
-  _bindEventListeners() {
-    this.canvas.on('mousemove', ({ pageX, pageY }) => {
-      let a = this.pointInPolygon(
-        [pageX, pageY],
-        this._spaceCoordsToPageRelative([
-          [20, 30],
-          [295, 30],
-          [295, 215],
-          [20, 215],
-          [20, 30],
-        ])
+  nextFloor() {
+    const floorsCount = this.data.length;
+    
+    if (this.currentFloorIndex + 1 <= floorsCount - 1) {
+      this.currentFloorIndex++;
+      this.changeActiveFloor(this.currentFloorIndex);
+    }
+  }
+
+  prevFloor() {
+    if (this.currentFloorIndex - 1 >= 0) {
+      this.currentFloorIndex--;
+      this.changeActiveFloor(this.currentFloorIndex);
+    }
+  }
+
+  _updateCanvasSizes() {
+    this.dpiWrapperWidth = this.wrapper.width() * 2;
+    this.dpiWrapperHeight = this.wrapper.height() * 2;
+    this.canvas.attr('width', this.dpiWrapperWidth + 'px');
+    this.canvas.attr('height', this.dpiWrapperHeight + 'px');
+  }
+
+  _getSpaceByCoords(x, y) {
+    const spacesInfo = this.data[this.currentFloorIndex].spacesInfo;
+
+    for (const space of spacesInfo) {
+      const pointInSpace = this.pointInPolygon(
+        [x, y],
+        this._spaceCoordsToPageRelative(space.spaceCoords)
       );
 
-      if (a) console.log(123);
-    });
-  }
+      if (pointInSpace) return space;
+    }
 
-  _getSpaceByCoords(x, y) {}
+    return false;
+  }
 
   _addSpace(coords, type, organizationInfo) {
     this.ctx.beginPath();
@@ -208,6 +272,22 @@ class FloorsScheme {
     return result;
   }
 
+  _showSpaceCard(data) {
+    this.spaceCard.toggleClass('hidden', false);
+
+    this.spaceCard.find('.space-card-title').text(data.title);
+
+    const spaceCardInfo = this.spaceCard.find('.space-card-info');
+    spaceCardInfo.empty();
+    for (const dataField of data.fields) {
+      spaceCardInfo.append(`<li><strong>${dataField.key}:</strong><span>${dataField.value}</span></li>`);
+    }
+  }
+
+  _hideSpaceCard() {
+    this.spaceCard.toggleClass('hidden', true);
+  }
+
   // TODO: move to lib
 
   pointInPolygon(point, vs, start, end) {
@@ -219,18 +299,18 @@ class FloorsScheme {
   }
 
   pointInPolygonFlat(point, vs, start, end) {
-    var x = point[0],
+    let x = point[0],
       y = point[1];
-    var inside = false;
+    let inside = false;
     if (start === undefined) start = 0;
     if (end === undefined) end = vs.length;
-    var len = (end - start) / 2;
-    for (var i = 0, j = len - 1; i < len; j = i++) {
-      var xi = vs[start + i * 2 + 0],
+    let len = (end - start) / 2;
+    for (let i = 0, j = len - 1; i < len; j = i++) {
+      let xi = vs[start + i * 2 + 0],
         yi = vs[start + i * 2 + 1];
-      var xj = vs[start + j * 2 + 0],
+      let xj = vs[start + j * 2 + 0],
         yj = vs[start + j * 2 + 1];
-      var intersect =
+      let intersect =
         yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
       if (intersect) inside = !inside;
     }
@@ -238,18 +318,18 @@ class FloorsScheme {
   }
 
   pointInPolygonNested(point, vs, start, end) {
-    var x = point[0],
+    let x = point[0],
       y = point[1];
-    var inside = false;
+    let inside = false;
     if (start === undefined) start = 0;
     if (end === undefined) end = vs.length;
-    var len = end - start;
-    for (var i = 0, j = len - 1; i < len; j = i++) {
-      var xi = vs[i + start][0],
+    let len = end - start;
+    for (let i = 0, j = len - 1; i < len; j = i++) {
+      let xi = vs[i + start][0],
         yi = vs[i + start][1];
-      var xj = vs[j + start][0],
+      let xj = vs[j + start][0],
         yj = vs[j + start][1];
-      var intersect =
+      let intersect =
         yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
       if (intersect) inside = !inside;
     }
