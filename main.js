@@ -64,22 +64,8 @@ class FloorsScheme {
 
   _bindEventListeners() {
     this.canvas.on('mousemove', ({ pageX, pageY }) => {
-      let canvasClientX = pageX - this.canvas.offset().left;
-      let canvasClientY = pageY - this.canvas.offset().top;
-
-      console.log(
-        this._spaceCoordsToPageRelative([
-          [20, 30],
-          [295, 30],
-          [295, 215],
-          [20, 215],
-          [20, 30],
-        ])
-      );
-      console.log(pageX, pageY);
-
       let a = this.pointInPolygon(
-        [canvasClientX, canvasClientY],
+        [pageX, pageY],
         this._spaceCoordsToPageRelative([
           [20, 30],
           [295, 30],
@@ -89,9 +75,7 @@ class FloorsScheme {
         ])
       );
 
-      if (a) alert(123);
-
-      console.log(a);
+      if (a) console.log(123);
     });
   }
 
