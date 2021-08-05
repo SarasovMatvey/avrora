@@ -77,19 +77,9 @@ class FloorsScheme {
   }
 
   _bindEventListeners() {
-    this.wrapper.find('.prev-floor').on('click', () => {
-      this.prevFloor();
-      this.wrapper
-        .find('.space-floor-select select')
-        .val(this.currentFloorIndex);
-    });
+    this.wrapper.find('.prev-floor').on('click', () => this.prevFloor());
 
-    this.wrapper.find('.next-floor').on('click', () => {
-      this.nextFloor();
-      this.wrapper
-        .find('.space-floor-select select')
-        .val(this.currentFloorIndex);
-    });
+    this.wrapper.find('.next-floor').on('click', () => this.nextFloor());
 
     this.wrapper
       .find('.space-floor-select select')
@@ -117,7 +107,8 @@ class FloorsScheme {
         pageX,
         pageY,
       ]);
-      [this.captureBorderLeft, this.captureBorderTop] = this._pageCoordToCanvasRelative([pageX, pageY], false);
+      [this.captureBorderLeft, this.captureBorderTop] =
+        this._pageCoordToCanvasRelative([pageX, pageY], false);
     });
     this.canvas.on('mousemove', ({ pageX, pageY }) => {
       if (!this.editMode || !this.spaceCapture) return;
@@ -135,8 +126,10 @@ class FloorsScheme {
         this.captureBottomRightCoord[1],
       ];
 
-      this.captureBorderWidth = pageX - this.captureBorderLeft - this.canvas.offset().left;
-      this.captureBorderHeight = pageY - this.captureBorderTop - this.canvas.offset().top;
+      this.captureBorderWidth =
+        pageX - this.captureBorderLeft - this.canvas.offset().left;
+      this.captureBorderHeight =
+        pageY - this.captureBorderTop - this.canvas.offset().top;
 
       let transformProperty = '';
       if (this.captureBorderWidth <= 0) {
@@ -145,14 +138,14 @@ class FloorsScheme {
       } else {
         transformProperty += ' scaleX(1)';
       }
-      
+
       if (this.captureBorderHeight <= 0) {
         transformProperty += ' scaleY(-1)';
         this.captureBorderHeight *= -1;
       } else {
         transformProperty += ' scaleY(1)';
       }
-      
+
       this.captureBorder.css('transform', transformProperty);
       this.captureBorder.css('left', this.captureBorderLeft + 'px');
       this.captureBorder.css('top', this.captureBorderTop + 'px');
@@ -187,23 +180,8 @@ class FloorsScheme {
   }
 
   changeActiveFloor(floorIndex) {
-    const floorImage = this.wrapper.find(
-      `.floor-image[data-index="${floorIndex}"]`
-    );
-    this.wrapper.find('.floor-image').attr('hidden', true);
-    floorImage.attr('hidden', false);
-
-    this._updateCanvasSizes();
-    this._showFloorSpaces(floorIndex);
-    floorImage.on(
-      'load',
-      function () {
-        this._updateCanvasSizes();
-        this._showFloorSpaces(floorIndex);
-      }.bind(this)
-    );
-
     this.currentFloorIndex = floorIndex;
+    this._floorChangeHandler();
   }
 
   nextFloor() {
@@ -211,15 +189,35 @@ class FloorsScheme {
 
     if (this.currentFloorIndex + 1 <= floorsCount - 1) {
       this.currentFloorIndex++;
-      this.changeActiveFloor(this.currentFloorIndex);
+      this._floorChangeHandler();
     }
   }
 
   prevFloor() {
     if (this.currentFloorIndex - 1 >= 0) {
       this.currentFloorIndex--;
-      this.changeActiveFloor(this.currentFloorIndex);
+      this._floorChangeHandler();
     }
+  }
+
+  _floorChangeHandler() {
+    const floorImage = this.wrapper.find(
+      `.floor-image[data-index="${this.currentFloorIndex}"]`
+    );
+    this.wrapper.find('.floor-image').attr('hidden', true);
+    floorImage.attr('hidden', false);
+
+    this._updateCanvasSizes();
+    this._showFloorSpaces(this.currentFloorIndex);
+    floorImage.on(
+      'load',
+      function () {
+        this._updateCanvasSizes();
+        this._showFloorSpaces(this.currentFloorIndex);
+      }.bind(this)
+    );
+
+    this.wrapper.find('.space-floor-select select').val(this.currentFloorIndex);
   }
 
   _updateCanvasSizes() {
@@ -373,6 +371,16 @@ class FloorsScheme {
     return result;
   }
 
+  _canvasCoordToPageRelative(coord, invertY = true) {
+    const [x, y] = coord;
+
+    return [
+      this.canvas.offset().left + x,
+      invertY
+        ? this.canvas.offset().top + (this.wrapper.height() - y)
+        : this.canvas.offset().top + y,
+    ];
+  }
   _pageCoordsToCanvasRelative(coords, invertY = true) {
     const result = coords.map(([x, y]) => {
       return [
@@ -394,17 +402,6 @@ class FloorsScheme {
       invertY
         ? this.wrapper.height() - (y - this.canvas.offset().top)
         : y - this.canvas.offset().top,
-    ];
-  }
-
-  _canvasCoordToPageRelative(coord, invertY = true) {
-    const [x, y] = coord;
-
-    return [
-      this.canvas.offset().left + x,
-      invertY
-        ? this.canvas.offset().top + (this.wrapper.height() - y)
-        : this.canvas.offset().top + y,
     ];
   }
 
