@@ -18,74 +18,85 @@
     <script src="pointIntPolygon.js"></script>
     <script src="main.js"></script>
     <script>
-      const floorScheme = new FloorsScheme(
-        '#floors',
-        [
-          {
-            floorNumber: 2,
-            floorImage: 'floor2.png',
-            spacesInfo: [
-              {
-                spaceCoords: [
-                  [20, 30],
-                  [295, 30],
-                  [295, 215],
-                  [20, 215],
-                  [20, 30],
-                ],
-                spaceType: 'busy',
-                organizationInfo: {
-                  name: '2gis',
-                  logo: '2gis.svg',
-                  autocenter: true,
-                  area: '45 кв.м.',
-                },
-              },
-              {
-                spaceCoords: [
-                  [445, 107],
-                  [618, 107],
-                  [618, 225],
-                  [445, 225],
-                  [445, 107],
-                ],
-                spaceType: 'busy',
-                organizationInfo: {
-                  name: 'kfc',
-                  logo: 'kfc.png',
-                  autocenter: true,
-                  area: '15 кв.м.',
-                },
-              },
-            ],
-          },
-          {
-            floorNumber: 3,
-            floorImage: 'floor3.png',
-            spacesInfo: [
-              {
-                spaceCoords: [
-                  [20, 30],
-                  [295, 30],
-                  [295, 215],
-                  [20, 215],
-                  [20, 30],
-                ],
-                spaceType: 'available',
-                organizationInfo: {
-                  name: 'Свободное пространство',
-                  logo: '2gis.svg',
-                  autocenter: true,
-                  area: '15 кв.м.',
-                },
-              },
-            ],
-          },
-        ],
+      const data = [
         {
-          editMode: true,
-        }
-      );
+          floorNumber: 2,
+          floorImage: 'floor2.png',
+          spacesInfo: [
+            {
+              spaceCoords: [
+                [20, 30],
+                [295, 30],
+                [295, 215],
+                [20, 215],
+                [20, 30],
+              ],
+              spaceType: 'busy',
+              organizationInfo: {
+                name: '2gis',
+                logo: '2gis.svg',
+                autocenter: true,
+                area: '45 кв.м.',
+              },
+            },
+            {
+              spaceCoords: [
+                [445, 107],
+                [618, 107],
+                [618, 225],
+                [445, 225],
+                [445, 107],
+              ],
+              spaceType: 'busy',
+              organizationInfo: {
+                name: 'kfc',
+                logo: 'kfc.png',
+                autocenter: true,
+                area: '15 кв.м.',
+              },
+            },
+          ],
+        },
+        {
+          floorNumber: 3,
+          floorImage: 'floor3.png',
+          spacesInfo: [
+            {
+              spaceCoords: [
+                [20, 30],
+                [295, 30],
+                [295, 215],
+                [20, 215],
+                [20, 30],
+              ],
+              spaceType: 'available',
+              organizationInfo: {
+                name: 'Свободное пространство',
+                logo: '2gis.svg',
+                autocenter: true,
+                area: '15 кв.м.',
+              },
+            },
+          ],
+        },
+      ];
+      const floorScheme = new FloorsScheme('#floors', data, {
+        editMode: true,
+        onCaptureMouseUp: (floor, coords) => {
+          data[floor].spacesInfo.push({
+            spaceCoords: coords,
+            spaceType: 'available',
+            organizationInfo: {
+              name: 'Свободное пространство',
+              logo: '2gis.svg',
+              autocenter: true,
+              area: '15 кв.м.',
+            },
+          });
+          floorScheme.updateData(data);
+          floorScheme.changeActiveFloor(floor);
+        },
+      });
       floorScheme.initialize();
     </script>
   </body>

@@ -20,9 +20,14 @@ class FloorsScheme {
     this.settings = settings;
     this.editMode = settings.editMode;
     this.spaceCapture = false;
+    this.captureTopLeftCoord = null;
+    this.captureBottomRightCoord = null;
+    this.captureTopRightCoord = null;
+    this.captureBottomLeftCoord = null;
   }
 
   initialize() {
+    this.wrapper.empty();
     this.canvas = $('<canvas class="floor-scheme"></canvas>');
     this.wrapper.append(this.canvas[0]);
     this.spaceCard = $(`
@@ -100,27 +105,66 @@ class FloorsScheme {
       }
     });
 
-    this.canvas.on('mousedown', () => {
+    this.canvas.on('mousedown', ({ pageX, pageY }) => {
       if (!this.editMode) return;
 
       this.spaceCapture = true;
-      console.log(1);
+      this.captureTopLeftCoord = this._pageCoordsToCanvasRelative([
+        [pageX, pageY],
+      ])[0];
     });
-    this.canvas.on('mousemove', () => {
+    this.canvas.on('mousemove', ({ pageX, pageY }) => {
       if (!this.editMode || !this.spaceCapture) return;
-      console.log(2);
+
+      this.captureBottomRightCoord = this._pageCoordsToCanvasRelative([
+        [pageX, pageY],
+      ])[0];
+      this.captureTopRightCoord = [
+        this.captureBottomRightCoord[0],
+        this.captureTopLeftCoord[1],
+      ];
+      this.captureBottomLeftCoord = [
+        this.captureTopLeftCoord[0],
+        this.captureBottomRightCoord[1],
+      ];
+
+      this.changeActiveFloor(this.currentFloorIndex);
+      this._addSpace(
+        [
+          this.captureTopLeftCoord,
+          this.captureTopRightCoord,
+          this.captureBottomRightCoord,
+          this.captureBottomLeftCoord,
+          this.captureTopLeftCoord,
+        ],
+        'available'
+      );
     });
     this.canvas.on('mouseup', () => {
       if (!this.editMode) return;
 
+      this.settings.onCaptureMouseUp(this.currentFloorIndex, [
+        this.captureTopLeftCoord,
+        this.captureTopRightCoord,
+        this.captureBottomRightCoord,
+        this.captureBottomLeftCoord,
+        this.captureTopLeftCoord,
+      ]);
       this.spaceCapture = false;
-      console.log(3);
+      this.captureTopLeftCoord = null;
     });
-    this.canvas.on('mouseleave', () => {
+    this.canvas.on('mouseout', () => {
       if (!this.editMode) return;
 
       this.spaceCapture = false;
+      this.captureTopLeftCoord = null;
+      this.changeActiveFloor(this.currentFloorIndex);
     });
+  }
+
+  updateData(newData) {
+    this.data = newData;
+    this.initialize();
   }
 
   changeActiveFloor(floorIndex) {
@@ -311,8 +355,8 @@ class FloorsScheme {
   _pageCoordsToCanvasRelative(coords) {
     const result = coords.map(([x, y]) => {
       return [
-        this.canvas.offset().left + x,
-        this.canvas.offset().top + (this.wrapper.height() - y),
+        x - this.canvas.offset().left,
+        this.wrapper.height() - (y - this.canvas.offset().top),
       ];
     });
 
