@@ -11,12 +11,15 @@ const ORGANIZATION_LOGO_BACKGROUND_COLOR = 'rgba(0, 0, 0, 0.3)';
 const ORGANIZATION_LOGO_BACKGROUND_RADIUS = 20;
 
 class FloorsScheme {
-  constructor(wrapper, data) {
+  constructor(wrapper, data, settings = {}) {
     this.wrapper = $(wrapper);
     this.data = data;
     this.dpiWrapperWidth = this.wrapper.width() * 2;
     this.dpiWrapperHeight = this.wrapper.height() * 2;
     this.currentFloorIndex = DEFAULT_FLOOR_INDEX;
+    this.settings = settings;
+    this.editMode = settings.editMode;
+    this.spaceCapture = false;
   }
 
   initialize() {
@@ -36,21 +39,19 @@ class FloorsScheme {
           <button class="next-floor">+</button>
         </div>
         <select>
-        ${
-          this.data.map((floor, index) => `<option value="${index}">Этаж - ${floor.floorNumber}</option>`)
-        }
+        ${this.data.map(
+          (floor, index) =>
+            `<option value="${index}">Этаж - ${floor.floorNumber}</option>`
+        )}
         </select>
       </div>
     `);
     this.wrapper.append(this.floorSelect);
 
-
     this.wrapper.css('position', 'relative');
     this.wrapper.css('width', WIDTH);
     this.wrapper.css('height', HEIGHT);
     this.canvas.css('zIndex', '1');
-
-    console.log(this.wrapper.height());
 
     this.ctx = this.canvas[0].getContext('2d');
 
@@ -67,6 +68,24 @@ class FloorsScheme {
   }
 
   _bindEventListeners() {
+    this.wrapper.find('.prev-floor').on('click', () => {
+      this.prevFloor();
+      this.wrapper
+        .find('.space-floor-select select')
+        .val(this.currentFloorIndex);
+    });
+
+    this.wrapper.find('.next-floor').on('click', () => {
+      this.nextFloor();
+      this.wrapper
+        .find('.space-floor-select select')
+        .val(this.currentFloorIndex);
+    });
+
+    this.wrapper
+      .find('.space-floor-select select')
+      .on('change', e => this.changeActiveFloor($(e.currentTarget).val()));
+
     this.canvas.on('mousemove', ({ pageX, pageY }) => {
       const space = this._getSpaceByCoords(pageX, pageY);
       const organizationInfo = space.organizationInfo;
@@ -74,24 +93,34 @@ class FloorsScheme {
       if (space) {
         this._showSpaceCard({
           title: organizationInfo.name,
-          fields: [
-            {key: 'Площадь', value: organizationInfo.area},
-          ]
+          fields: [{ key: 'Площадь', value: organizationInfo.area }],
         });
       } else {
         this._hideSpaceCard();
       }
     });
 
-    this.wrapper.find('.prev-floor').on('click', () => {
-      this.prevFloor()
-      this.wrapper.find('.space-floor-select select').val(this.currentFloorIndex);
+    this.canvas.on('mousedown', () => {
+      if (!this.editMode) return;
+
+      this.spaceCapture = true;
+      console.log(1);
     });
-    this.wrapper.find('.next-floor').on('click', () => {
-      this.nextFloor()
-      this.wrapper.find('.space-floor-select select').val(this.currentFloorIndex);
+    this.canvas.on('mousemove', () => {
+      if (!this.editMode || !this.spaceCapture) return;
+      console.log(2);
     });
-    this.wrapper.find('.space-floor-select select').on('change', e => this.changeActiveFloor($(e.currentTarget).val()))
+    this.canvas.on('mouseup', () => {
+      if (!this.editMode) return;
+
+      this.spaceCapture = false;
+      console.log(3);
+    });
+    this.canvas.on('mouseleave', () => {
+      if (!this.editMode) return;
+
+      this.spaceCapture = false;
+    });
   }
 
   changeActiveFloor(floorIndex) {
@@ -116,7 +145,7 @@ class FloorsScheme {
 
   nextFloor() {
     const floorsCount = this.data.length;
-    
+
     if (this.currentFloorIndex + 1 <= floorsCount - 1) {
       this.currentFloorIndex++;
       this.changeActiveFloor(this.currentFloorIndex);
@@ -141,9 +170,9 @@ class FloorsScheme {
     const spacesInfo = this.data[this.currentFloorIndex].spacesInfo;
 
     for (const space of spacesInfo) {
-      const pointInSpace = this.pointInPolygon(
+      const pointInSpace = PointInPolygon.pointInPolygon(
         [x, y],
-        this._spaceCoordsToPageRelative(space.spaceCoords)
+        this._canvasCoordsToPageRelative(space.spaceCoords)
       );
 
       if (pointInSpace) return space;
@@ -268,7 +297,18 @@ class FloorsScheme {
     }
   }
 
-  _spaceCoordsToPageRelative(coords) {
+  _canvasCoordsToPageRelative(coords) {
+    const result = coords.map(([x, y]) => {
+      return [
+        this.canvas.offset().left + x,
+        this.canvas.offset().top + (this.wrapper.height() - y),
+      ];
+    });
+
+    return result;
+  }
+
+  _pageCoordsToCanvasRelative(coords) {
     const result = coords.map(([x, y]) => {
       return [
         this.canvas.offset().left + x,
@@ -287,59 +327,13 @@ class FloorsScheme {
     const spaceCardInfo = this.spaceCard.find('.space-card-info');
     spaceCardInfo.empty();
     for (const dataField of data.fields) {
-      spaceCardInfo.append(`<li><strong>${dataField.key}:</strong><span>${dataField.value}</span></li>`);
+      spaceCardInfo.append(
+        `<li><strong>${dataField.key}:</strong><span>${dataField.value}</span></li>`
+      );
     }
   }
 
   _hideSpaceCard() {
     this.spaceCard.toggleClass('hidden', true);
-  }
-
-  // TODO: move to lib
-
-  pointInPolygon(point, vs, start, end) {
-    if (vs.length > 0 && Array.isArray(vs[0])) {
-      return this.pointInPolygonNested(point, vs, start, end);
-    } else {
-      return this.pointInPolygonFlat(point, vs, start, end);
-    }
-  }
-
-  pointInPolygonFlat(point, vs, start, end) {
-    let x = point[0],
-      y = point[1];
-    let inside = false;
-    if (start === undefined) start = 0;
-    if (end === undefined) end = vs.length;
-    let len = (end - start) / 2;
-    for (let i = 0, j = len - 1; i < len; j = i++) {
-      let xi = vs[start + i * 2 + 0],
-        yi = vs[start + i * 2 + 1];
-      let xj = vs[start + j * 2 + 0],
-        yj = vs[start + j * 2 + 1];
-      let intersect =
-        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-      if (intersect) inside = !inside;
-    }
-    return inside;
-  }
-
-  pointInPolygonNested(point, vs, start, end) {
-    let x = point[0],
-      y = point[1];
-    let inside = false;
-    if (start === undefined) start = 0;
-    if (end === undefined) end = vs.length;
-    let len = end - start;
-    for (let i = 0, j = len - 1; i < len; j = i++) {
-      let xi = vs[i + start][0],
-        yi = vs[i + start][1];
-      let xj = vs[j + start][0],
-        yj = vs[j + start][1];
-      let intersect =
-        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-      if (intersect) inside = !inside;
-    }
-    return inside;
   }
 }
