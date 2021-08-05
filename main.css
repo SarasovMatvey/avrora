@@ -98,3 +98,9 @@ body {
 .space-floor-select-controls button:active {
   background: #d3d3d3;
 }
+
+.capture-border {
+  position: absolute;
+  border: 1px dashed #000;
+  transform-origin: 0 0;
+}
