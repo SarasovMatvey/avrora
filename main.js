@@ -173,7 +173,7 @@ class FloorsScheme {
       this.captureTopLeftCoord = null;
     });
     this.canvas.on('mouseout', () => {
-      if (!this.editMode) return;
+      if (!this.editMode || !this.spaceCapture) return;
 
       this.spaceCapture = false;
       this.captureTopLeftCoord = null;
